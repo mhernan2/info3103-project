@@ -27,6 +27,16 @@ types:
     properties: 
       username: string
       password: string
+  account:
+    type: object
+    properties:
+      user_id:
+        type: string
+        required: false
+      first_name: string
+      last_name: string
+      username: string
+      password: string
 
 /users:
   get:
@@ -49,6 +59,31 @@ types:
                   "last_name": "Burr"
                 }
               ]
+      404:
+  
+  post:
+    description: register a user into the system
+    body:
+      application/json:
+        type: account
+        example: 
+          {
+            "first_name": "Bill",
+            "last_name": "Burr",
+            "username": "bburr",
+            "password": "abc123"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            type: user
+            example:
+              {
+                "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                "first_name": "Bill",
+                "last_name": "Burr",
+              }
       404:
 
   /{user_id}:
@@ -110,16 +145,16 @@ types:
                 example: |
                   [
                     {
-                      "price": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
                       "to": "Tom",
-                      "from": "Santa",
+                      "from": "Morgan",
                       "item_name": "car",
                       "price": 30000
                     },
                     {
-                      "price": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
                       "to": "Mark",
-                      "from": "Mom",
+                      "from": "Teresa",
                       "item_name": "laptop",
                       "price": 1200
                     }
@@ -133,8 +168,9 @@ types:
                 type: gift
                 example: |
                   {
+                    "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
                     "to": "Mark",
-                    "from": "Mom",
+                    "from": "Albert",
                     "item_name": "laptop",
                     "price": 1200
                   }
@@ -146,7 +182,7 @@ types:
               example: |
                 {
                   "to": "Mark",
-                  "from": "Mom",
+                  "from": "Albert",
                   "item_name": "laptop",
                   "price": 1200
                 }
@@ -160,8 +196,9 @@ types:
                   type: gift
                   example: |
                     {
+                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
                       "to": "Mark",
-                      "from": "Mom",
+                      "from": "Albert",
                       "item_name": "laptop",
                       "price": 1200
                     }
@@ -174,7 +211,7 @@ types:
               example: |
                 {
                   "to": "Mark",
-                  "from": "Mom",
+                  "from": "Albert",
                   "item_name": "acer laptop",
                   "price": 1200
                 }
@@ -185,8 +222,9 @@ types:
                   type: gift
                   example: |
                     {
+                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
                       "to": "Mark",
-                      "from": "Mom",
+                      "from": "Albert",
                       "item_name": "acer laptop",
                       "price": 1200
                     }
@@ -210,21 +248,23 @@ types:
             example: |
               [
                 {
+                  "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
                   "to": "Mark",
-                  "from": "Mom",
+                  "from": "Albert",
                   "item_name": "acer laptop",
                   "price": 1200
                 },
                 {
+                  "gift_id": "fdecdb4f-dbd7-11e8-b6a5-7as56d5fas",
                   "to": "Laura",
-                  "from": "Dad",
+                  "from": "Morgan",
                   "item_name": "iphone x",
                   "price": 1000
                 }
               ]
 
 /login:
-  description: manages login system
+  description: manages login mechanism
 
   post:
     description: logs in a user

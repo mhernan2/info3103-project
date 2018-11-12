@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -X GET "http://info3103.cs.unb.ca:36371/project/users"

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+read -p "first_name: " first_name
+read -p "last_name: " last_name
+read -p "username: " username
+read -s -p "password: " password
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"first_name": "'$first_name'", "username": "'$last_name'", "username": "'$username'", "password": "'$password'"}' -c cookie-jar -k https://info3103.cs.unb.ca:36371/users

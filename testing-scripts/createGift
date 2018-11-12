@@ -1,0 +1,8 @@
+#!/bin/bash
+
+read -p "to: " to
+read -p "from: " from
+read -p "item_name: " item_name
+read -p "price: " price
+
+curl -i -H "Content-Type: application/json" -X POST -d '{"to": "'$to'", "from": "'$from'", "item_name": "'$item_name'", "price": "'$price'"}' -c cookie-jar -k https://info3103.cs.unb.ca:36371/users/{user_id}/gifts
