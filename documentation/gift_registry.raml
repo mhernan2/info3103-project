@@ -22,6 +22,11 @@ types:
       price:      number
       to:         string
       from:       string
+  credentials:
+    type: object
+    properties: 
+      username: string
+      password: string
 
 /users:
   get:
@@ -63,7 +68,7 @@ types:
         403:
         404:
     put:
-      description: updates the information of a user resource
+      description: updates the information of the user specified with `user_id`
       body:
         application/json:
           type: user
@@ -89,6 +94,7 @@ types:
 
     /gifts:
       description: collection of gifts registered the application
+
       get:
         description: retrieves a list of gifts linked to the user defined in `user_id`
         queryParameters:
@@ -146,7 +152,7 @@ types:
                 }
       /{gift_id}:
         get:
-          description: gift resource registered in the application
+          description: retrieve gift resource specified by `gift_id`
           responses:
             200:
               body:
@@ -161,6 +167,7 @@ types:
                     }
             404:
         put:
+          description: modify gift resource specified by `user_id`
           body:
             application/json:
               type: gift
@@ -185,5 +192,55 @@ types:
                     }
             404:
         delete:
+          description: delete a gift resource
           responses:
             204:
+
+/gifts:
+  description: collection of gift resources
+
+  get:
+    description: retrieves a list of all gift resources
+    queryParameters: 
+      user_id: string
+    responses: 
+      200:
+        body:
+          application/json:
+            example: |
+              [
+                {
+                  "to": "Mark",
+                  "from": "Mom",
+                  "item_name": "acer laptop",
+                  "price": 1200
+                },
+                {
+                  "to": "Laura",
+                  "from": "Dad",
+                  "item_name": "iphone x",
+                  "price": 1000
+                }
+              ]
+
+/login:
+  description: manages login system
+
+  post:
+    description: logs in a user
+    body:
+      application/json:
+        type: credentials
+        example: |
+          {
+            "username": "mzuckerberg",
+            "password": "abc123"
+          }
+    responses:
+      200:
+      404:
+  
+  delete:
+    description: logs out a user
+    responses:
+      204:

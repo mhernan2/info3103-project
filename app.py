@@ -42,7 +42,7 @@ class SignIn(Resource):
 	#
 	# Example curl command:
 	# curl -i -H "Content-Type: application/json" -X POST -d '{"username": "Casper", "password": "crap"}'
-	#  	-c cookie-jar -k https://info3103.cs.unb.ca:61340/signin
+	#  	-c cookie-jar -k https://info3103.cs.unb.ca:36371/signin
 	#
 	def post(self):
 
@@ -88,7 +88,7 @@ class SignIn(Resource):
 	#
 	# Example curl command:
 	# curl -i -H "Content-Type: application/json" -X GET -b cookie-jar
-	#	-k https://info3103.cs.unb.ca:61340/signin
+	#	-k https://info3103.cs.unb.ca:36371/signin
 	def get(self):
 		success = False
 		if 'username' in session:
@@ -105,7 +105,7 @@ class SignIn(Resource):
 	#
 	# Example curl command:
 	# curl -i -H "Content-Type: application/json" -X DELETE -b cookie-jar
-	#	-k https://info3103.cs.unb.ca:61340/signin
+	#	-k https://info3103.cs.unb.ca:36371/signin
 
 	#
 	#	Here's your chance to shine!
