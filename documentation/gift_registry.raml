@@ -1,0 +1,189 @@
+#%RAML 1.0
+title: Present Registry
+version: v0.01
+baseUri: http://info3103.cs.unb.ca:36371/project
+types:
+  URI: string
+  user:
+    type: object
+    properties:
+      user_id:
+        type: string
+        required: false
+      first_name: string
+      last_name:  string
+  gift:
+    type: object
+    properties:
+      gift_id:
+        type: string
+        required: false
+      item_name:  string
+      price:      number
+      to:         string
+      from:       string
+
+/users:
+  get:
+    description: get a list of users registered in the application
+    responses:
+      200:
+        body:
+          application/json:
+            type: user[]
+            example: |
+              [
+                {
+                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-3065ec6fbf23",
+                  "first_name": "Tom",
+                  "last_name": "Segura"
+                },
+                {
+                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                  "first_name": "Bill",
+                  "last_name": "Burr"
+                }
+              ]
+      404:
+
+  /{user_id}:
+    get:
+      description: get a user resource with `user_id`
+      responses:
+        200:
+          body:
+            application/json:
+              type: user
+              example: |
+                {
+                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                  "first_name": "Bill",
+                  "last_name": "Burr"
+                }
+        403:
+        404:
+    put:
+      description: updates the information of a user resource
+      body:
+        application/json:
+          type: user
+          example: |
+              {
+                "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                "first_name": "Billy",
+                "last_name": "Burr"
+              }
+      responses:
+        204:
+          body:
+            application/json:
+              type: user
+              example: |
+                {
+                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                  "first_name": "Bill",
+                  "last_name": "Burr"
+                }
+        404:
+        400:
+
+    /gifts:
+      description: collection of gifts registered the application
+      get:
+        description: retrieves a list of gifts linked to the user defined in `user_id`
+        queryParameters:
+          to:
+            description: name of the user that sent the gift
+            type: string
+            required: false
+        responses:
+          200:
+            body:
+              application/json:
+                type: gift[]
+                example: |
+                  [
+                    {
+                      "price": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "to": "Tom",
+                      "from": "Santa",
+                      "item_name": "car",
+                      "price": 30000
+                    },
+                    {
+                      "price": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "to": "Mark",
+                      "from": "Mom",
+                      "item_name": "laptop",
+                      "price": 1200
+                    }
+                  ]
+      post:
+        description: creates a new gift resource for the user defined by `user_id`
+        responses:
+          200:
+            body:
+              application/json:
+                type: gift
+                example: |
+                  {
+                    "to": "Mark",
+                    "from": "Mom",
+                    "item_name": "laptop",
+                    "price": 1200
+                  }
+          403:
+          400:
+        body:
+          application/json:
+              type: gift
+              example: |
+                {
+                  "to": "Mark",
+                  "from": "Mom",
+                  "item_name": "laptop",
+                  "price": 1200
+                }
+      /{gift_id}:
+        get:
+          description: gift resource registered in the application
+          responses:
+            200:
+              body:
+                application/json:
+                  type: gift
+                  example: |
+                    {
+                      "to": "Mark",
+                      "from": "Mom",
+                      "item_name": "laptop",
+                      "price": 1200
+                    }
+            404:
+        put:
+          body:
+            application/json:
+              type: gift
+              example: |
+                {
+                  "to": "Mark",
+                  "from": "Mom",
+                  "item_name": "acer laptop",
+                  "price": 1200
+                }
+          responses:
+            200:
+              body:
+                application/json:
+                  type: gift
+                  example: |
+                    {
+                      "to": "Mark",
+                      "from": "Mom",
+                      "item_name": "acer laptop",
+                      "price": 1200
+                    }
+            404:
+        delete:
+          responses:
+            204:
