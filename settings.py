@@ -1,6 +1,6 @@
 #/usr/bin/env python
-# APP_HOST = 'info3103.cs.unb.ca'
-APP_HOST = 'locahost'
+APP_HOST = 'info3103.cs.unb.ca'
+# APP_HOST = 'locahost'
 APP_PORT = 36371
 APP_DEBUG = True
 
