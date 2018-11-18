@@ -2,3 +2,4 @@ venv
 *.pyc
 flask_session
 *.pem
+cookie-jar
