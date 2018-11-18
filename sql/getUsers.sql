@@ -3,7 +3,6 @@ DROP PROCEDURE IF EXISTS getUsers //
 
 CREATE PROCEDURE getUsers()
 BEGIN
-  SELECT *
-    FROM users;
+  SELECT * FROM users;
 END //
 DELIMITER ;

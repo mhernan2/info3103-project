@@ -1,0 +1,8 @@
+DROP PROCEDURE IF EXISTS getGiftById;
+
+DELIMITER //
+CREATE PROCEDURE getGiftById(IN gift_id_in VARCHAR(50))
+BEGIN
+SELECT * FROM gifts WHERE gift_id=gift_id_in;
+END//
+DELIMITER ;

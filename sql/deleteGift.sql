@@ -1,0 +1,8 @@
+DROP PROCEDURE IF EXISTS deleteGift;
+
+DELIMITER //
+CREATE PROCEDURE deleteGift(IN gift_id_in INT)
+BEGIN
+DELETE FROM gifts WHERE gift_id=gift_id_in;
+END//
+DELIMITER ;

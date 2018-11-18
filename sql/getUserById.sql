@@ -1,0 +1,8 @@
+DROP PROCEDURE IF EXISTS getUserById;
+
+DELIMITER //
+CREATE PROCEDURE getUserById(IN user_id_in VARCHAR(50))
+BEGIN
+SELECT * FROM users WHERE user_id=user_id_in;
+END//
+DELIMITER ;

@@ -1,10 +1,9 @@
-DELIMITER //
-DROP PROCEDURE IF EXISTS createSchool //
+DROP PROCEDURE IF EXISTS registerUser;
 
-CREATE PROCEDURE createSchool(IN NameIn varchar(50), IN ProvinceIn varchar(20), IN LanguageIn char(2), IN LevelIn varchar (10))
+DELIMITER //
+CREATE PROCEDURE registerUser(IN user_id_in VARCHAR(50), IN first_name_in VARCHAR(50), IN last_name_in VARCHAR(50))
 BEGIN
-INSERT INTO schools (Name, Province, Language, Level) VALUES
-   (NameIn, ProvinceIn, LanguageIn, LevelIn);
-SELECT LAST_INSERT_ID();
+INSERT INTO users VALUES (user_id_in, first_name_in, last_name_in);
+SELECT * FROM users WHERE user_id=user_id_in;
 END//
 DELIMITER ;
