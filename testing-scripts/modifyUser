@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Read username and password
+read -p "username: " username
+read -p "first_name: " first_name
+read -p "last_name: " last_name
+
+
+# substitute into the curl command
+curl -i -H "Content-Type: application/json" -X PUT -d '{"username": "'$username'", "first_name": "'$first_name'", "last_name": "'$last_name'"}' -c cookie-jar -k http://info3103.cs.unb.ca:36371/users/$username
