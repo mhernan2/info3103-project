@@ -9,6 +9,7 @@ from ldap3.core.exceptions import *
 import ssl
 import settings
 import pymysql.cursors
+from utils import use_db, get_ldap_connection, get_vals, check_user
 
 app = Flask(__name__)
 # Set Server-side session config: Save sessions in the local app directory.
@@ -19,18 +20,25 @@ app.config['SESSION_COOKIE_DOMAIN'] = settings.APP_HOST
 Session(app)
 
 
-@app.errorhandler(400) # decorators to add to 400 response
+@app.errorhandler(400)
 def not_found(error):
 	return make_response(jsonify( { 'status': 'Bad request' } ), 400)
 
-@app.errorhandler(404) # decorators to add to 404 response
+
+@app.errorhandler(404)
 def not_found(error):
 	return make_response(jsonify( { 'status': 'Resource not found' } ), 404)
 
 
+@app.errorhandler(403)
+def not_found(error):
+	return make_response(jsonify( { 'status': 'Access Denied' } ), 403)
+
+
 class Login(Resource):
 
-	def post(self):
+	@use_db
+	def post(self, cursor):
 
 		if not request.json:
 			abort(400)
@@ -39,66 +47,38 @@ class Login(Resource):
 		try:
 			parser.add_argument('username', type=str, required=True)
 			parser.add_argument('password', type=str, required=True)
-			request_params = parser.parse_args()
+			req_params = parser.parse_args()
 		except:
 			abort(400)
 
-		if request_params['username'] in session:
+		if session.get('username') == req_params['username']:
 			response = {'status': 'success'}
 			responseCode = 200
 		else:
-			try:
-				dbConnection = pymysql.connect(
-					settings.DB_HOST,
-					settings.DB_USER,
-					settings.DB_PASSWD,
-					settings.DB_DATABASE,
-					charset='utf8mb4',
-					cursorclass= pymysql.cursors.DictCursor)
-				sql = 'getUserById'
-				cursor = dbConnection.cursor()
-				cursor.callproc(sql, (request_params['username'], ))
-				user = cursor.fetchone()
+			if check_user(cursor, req_params['username']):
+				try:
+					ldapConnection = get_ldap_connection(req_params['username'], req_params['password'])
+					ldapConnection.open()
+					ldapConnection.start_tls()
+					ldapConnection.bind()
 
-				# check if user is already registered
-				if user:
-					try:
-						ldapServer = Server(host=settings.LDAP_HOST)
-						ldapConnection = Connection(ldapServer,
-							raise_exceptions=True,
-							user='uid='+request_params['username']+', ou=People,ou=fcs,o=unb',
-							password = request_params['password'])
-						ldapConnection.open()
-						ldapConnection.start_tls()
-						ldapConnection.bind()
-						# At this point we have sucessfully authenticated.
-						session['username'] = request_params['username']
-						response = {'status': 'success' }
-						responseCode = 201
-					except LDAPException:
-						response = {'status': 'Access denied'}
-						responseCode = 403
-					finally:
-						ldapConnection.unbind()
-			except:
-				abort(500)
-			finally:
-				cursor.close()
-				dbConnection.close()
-
-			return make_response(jsonify(response), responseCode)
-
+					session['username'] = req_params['username']
+					response = {'status': 'success' }
+					responseCode = 201
+				except LDAPException:
+					abort(403)
+				finally:
+					ldapConnection.unbind()
 
 		return make_response(jsonify(response), responseCode)
 
 	def get(self):
-		if 'username' in session:
-			username = session['username']
-			response = {'status': 'success'}
+		response = {'status': 'fail'}
+		responseCode = 400
+
+		if session.get('username'):
+			response = { 'status': 'success' }
 			responseCode = 200
-		else:
-			response = {'status': 'fail'}
-			responseCode = 403
 
 		return make_response(jsonify(response), responseCode)
 
@@ -108,10 +88,10 @@ class Login(Resource):
 		return make_response(jsonify({"status": "success"}), 200)
 
 
-
 class Users(Resource):
 
-	def post(self):
+	@use_db
+	def post(self, cursor):
 
 		if not request.json:
 			abort(400)
@@ -122,112 +102,56 @@ class Users(Resource):
 			parser.add_argument('last_name', type=str, required=True)
 			parser.add_argument('username', type=str, required=True)
 			parser.add_argument('password', type=str, required=True)
-			request_params = parser.parse_args()
+			req_params = parser.parse_args()
 		except:
 			abort(400)
 
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'getUserById'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (request_params['username'], ))
-			user = cursor.fetchone()
+		response = { 'status': 'User already registered' }
+		responseCode = 400
 
-			# check if user is already registered
-			if user:
-				response = { 'message': 'user already exists' }
-				responseCode = 400
-			else:
-				try:
-					ldapServer = Server(host=settings.LDAP_HOST)
-					ldapConnection = Connection(ldapServer,
-						raise_exceptions=True,
-						user='uid='+request_params['username']+', ou=People,ou=fcs,o=unb',
-						password = request_params['password'])
-					ldapConnection.open()
-					ldapConnection.start_tls()
-					ldapConnection.bind()
-					sql = 'registerUser'
-					cursor.callproc(sql, (request_params['username'], request_params['first_name'], request_params['last_name']))
-					dbConnection.commit()
-					response = {'status': 'success' }
-					responseCode = 200
-				except LDAPException:
-					response = {'status': 'Access denied'}
-					responseCode = 403
-				finally:
-					ldapConnection.unbind()
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
+		user = check_user(cursor, req_params['username'])
+		if not user:
+			try:
+				ldapConnection = get_ldap_connection(req_params['username'], req_params['password'])
+				ldapConnection.open()
+				ldapConnection.start_tls()
+				ldapConnection.bind()
+
+				# at this point the user is logged in
+				cursor.callproc('registerUser', get_vals(req_params, 'username', 'first_name', 'last_name'))
+				cursor.connection.commit()
+
+				response = { 'status': 'success' }
+				responseCode = 200
+			except LDAPException:
+				abort(403)
+			finally:
+				ldapConnection.unbind()
 
 		return make_response(jsonify(response), responseCode)
 
-	def get(self):
-		response = {
-			'status': 'fail'
-		}
-		responseCode = 404
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'getUsers'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql)
-			users = cursor.fetchall()
-			response = {'users': users}
-			responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
-
-		return make_response(jsonify(response), responseCode)
+	@use_db
+	def get(self, cursor):
+		cursor.callproc('getUsers')
+		users = cursor.fetchall()
+		return make_response(jsonify({ 'users': users }), 200)
 
 
 class User(Resource):
-	def get(self, user_id):
-		response = {
-			'status': 'fail'
-		}
+	@use_db
+	def get(self, user_id, cursor):
+		response = { 'status': 'User doesn\'t exist' }
 		responseCode = 404
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'getUserById'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (user_id,))
-			user = cursor.fetchone()
+
+		user = check_user(cursor, user_id)
+		if user:
 			response = {'user': user}
 			responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
 
-		return make_response(jsonify(response), responseCode)
+			return make_response(jsonify(response), responseCode)
 
 	def put(self, user_id):
+		print(session.get('username'))
 		if not request.json:
 			abort(400)
 
@@ -236,17 +160,14 @@ class User(Resource):
 			parser.add_argument('username', type=str, required=True)
 			parser.add_argument('first_name', type=str, required=True)
 			parser.add_argument('last_name', type=str, required=True)
-			request_params = parser.parse_args()
+			req_params = parser.parse_args()
 		except:
 			abort(400)
 
+		response = { 'status': 'Access Denied' }
+		responseCode = 403
+
 		# authorize user
-		if request_params['username'] in session:
-			abort(403, 'You can\'t modify this user')
-
-		response = { 'status': 'fail' }
-		responseCode = 400
-
 		try:
 			dbConnection = pymysql.connect(
 				settings.DB_HOST,
@@ -255,9 +176,8 @@ class User(Resource):
 				settings.DB_DATABASE,
 				charset='utf8mb4',
 				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'updateUser'
 			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (user_id, request_params['first_name'], request_params['last_name']))
+			cursor.callproc('updateUser', get_vals(req_params, 'username', 'first_name', 'last_name'))
 			user = cursor.fetchone()
 			dbConnection.commit()
 			response = { 'user': user }
@@ -270,6 +190,7 @@ class User(Resource):
 
 		return make_response(jsonify(response), responseCode)
 
+
 class Gifts(Resource):
 	def post(self, user_id):
 		if not request.json:
@@ -280,7 +201,7 @@ class Gifts(Resource):
 			parser.add_argument('item_name', type=str, required=True)
 			parser.add_argument('price', type=int, required=True)
 			parser.add_argument('to', type=str, required=True)
-			request_params = parser.parse_args()
+			req_params = parser.parse_args()
 		except:
 			abort(400)
 
@@ -297,7 +218,7 @@ class Gifts(Resource):
 				cursorclass= pymysql.cursors.DictCursor)
 			sql = 'registerGift'
 			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (request_params['item_name'], request_params['price'], request_params['to'], user_id))
+			cursor.callproc(sql, (req_params['item_name'], req_params['price'], req_params['to'], user_id))
 			gift = cursor.fetchone()
 			dbConnection.commit()
 			response = { 'gift': gift }
@@ -311,9 +232,7 @@ class Gifts(Resource):
 		return make_response(jsonify(response), responseCode)
 
 	def get(self, user_id):
-		response = {
-			'status': 'fail'
-		}
+		response = { 'status': 'fail' }
 		responseCode = 404
 		try:
 			dbConnection = pymysql.connect(
@@ -378,7 +297,7 @@ class Gift(Resource):
 			parser.add_argument('item_name', type=str, required=True)
 			parser.add_argument('price', type=int, required=True)
 			parser.add_argument('to', type=str, required=True)
-			request_params = parser.parse_args()
+			req_params = parser.parse_args()
 		except:
 			abort(400)
 
@@ -395,7 +314,7 @@ class Gift(Resource):
 				cursorclass= pymysql.cursors.DictCursor)
 			sql = 'updateGift'
 			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (gift_id, request_params['item_name'], request_params['price'], request_params['to'], user_id))
+			cursor.callproc(sql, (gift_id, req_params['item_name'], req_params['price'], req_params['to'], user_id))
 			gift = cursor.fetchone()
 			dbConnection.commit()
 			if gift:
@@ -431,6 +350,14 @@ class Gift(Resource):
 
 		return make_response('', 204)
 
+
+class Test(Resource):
+	@use_db
+	def get(self, test_id, cursor):
+		for i in session:
+			print(i)
+		return make_response(jsonify({'hello': 'world'}), 200)
+
 ####################################################################################
 #
 # Identify/create endpoints and endpoint objects
@@ -441,6 +368,7 @@ api.add_resource(Users, '/users')
 api.add_resource(User, '/users/<string:user_id>')
 api.add_resource(Gifts, '/users/<string:user_id>/gifts')
 api.add_resource(Gift, '/users/<string:user_id>/gifts/<int:gift_id>')
+api.add_resource(Test, '/test/<string:test_id>')
 
 
 #############################################################################
