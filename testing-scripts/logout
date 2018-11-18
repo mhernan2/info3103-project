@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -i -H "Content-Type: application/json" -X DELETE -b cookie-jar -k http://info3103.cs.unb.ca:36371/login
