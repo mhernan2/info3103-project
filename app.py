@@ -150,8 +150,8 @@ class User(Resource):
 
 			return make_response(jsonify(response), responseCode)
 
-	def put(self, user_id):
-		print(session.get('username'))
+	@use_db
+	def put(self, user_id, cursor):
 		if not request.json:
 			abort(400)
 
@@ -168,31 +168,19 @@ class User(Resource):
 		responseCode = 403
 
 		# authorize user
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			cursor = dbConnection.cursor()
+		if session.get('username') == user_id:
 			cursor.callproc('updateUser', get_vals(req_params, 'username', 'first_name', 'last_name'))
 			user = cursor.fetchone()
-			dbConnection.commit()
+			cursor.connection.commit()
 			response = { 'user': user }
 			responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
 
 		return make_response(jsonify(response), responseCode)
 
 
 class Gifts(Resource):
-	def post(self, user_id):
+	@use_db
+	def post(self, user_id, cursor):
 		if not request.json:
 			abort(400)
 
@@ -205,90 +193,48 @@ class Gifts(Resource):
 		except:
 			abort(400)
 
-		response = { 'status': 'fail' }
-		responseCode = 400
+		response = { 'status': 'Access Denied' }
+		responseCode = 403
 
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'registerGift'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (req_params['item_name'], req_params['price'], req_params['to'], user_id))
+		if session.get('username') == user_id:
+			cursor.callproc('registerGift', get_vals(req_params, 'item_name', 'price', 'to')+(user_id,))
+			cursor.connection.commit()
 			gift = cursor.fetchone()
-			dbConnection.commit()
 			response = { 'gift': gift }
 			responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
 
 		return make_response(jsonify(response), responseCode)
 
-	def get(self, user_id):
+	@use_db
+	def get(self, user_id, cursor):
 		response = { 'status': 'fail' }
-		responseCode = 404
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'getGiftsSent'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (user_id,))
-			gifts = cursor.fetchall()
-			response = {'gifts': gifts}
-			responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
+		responseCode = 400
+
+		cursor.callproc('getGiftsSent', (user_id,))
+		gifts = cursor.fetchall()
+		response = { 'gifts': gifts }
+		responseCode = 200
 
 		return make_response(jsonify(response), responseCode)
 
 
 class Gift(Resource):
 
-	def get(self, user_id, gift_id):
-		response = {
-			'status': 'fail'
-		}
+	@use_db
+	def get(self, user_id, gift_id, cursor):
+		response = { 'status': 'Resource Not Found' }
 		responseCode = 404
 
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'getGiftById'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (user_id, gift_id))
-			gift = cursor.fetchone()
-			if gift:
-				response = {'gift': gift }
-				responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
+		cursor.callproc('getGiftById', (user_id, gift_id))
+		gift = cursor.fetchone()
+		if gift:
+			response = {'gift': gift }
+			responseCode = 200
 
 		return make_response(jsonify(response), responseCode)
 
-	def put(self, user_id, gift_id):
+	@use_db
+	def put(self, user_id, gift_id, cursor):
 		if not request.json:
 			abort(400)
 
@@ -304,59 +250,21 @@ class Gift(Resource):
 		response = { 'status': 'fail' }
 		responseCode = 400
 
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'updateGift'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (gift_id, req_params['item_name'], req_params['price'], req_params['to'], user_id))
-			gift = cursor.fetchone()
-			dbConnection.commit()
-			if gift:
-				response = { 'gift': gift }
-				responseCode = 200
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
+		cursor.callproc('updateGift', (gift_id, req_params['item_name'], req_params['price'], req_params['to'], user_id))
+		gift = cursor.fetchone()
+		cursor.connection.commit()
+		if gift:
+			response = { 'gift': gift }
+			responseCode = 200
 
 		return make_response(jsonify(response), responseCode)
 
-	def delete(self, user_id, gift_id):
-		try:
-			dbConnection = pymysql.connect(
-				settings.DB_HOST,
-				settings.DB_USER,
-				settings.DB_PASSWD,
-				settings.DB_DATABASE,
-				charset='utf8mb4',
-				cursorclass= pymysql.cursors.DictCursor)
-			sql = 'deleteGift'
-			cursor = dbConnection.cursor()
-			cursor.callproc(sql, (user_id, gift_id))
-			dbConnection.commit()
-			gift = cursor.fetchone()
-		except:
-			abort(500)
-		finally:
-			cursor.close()
-			dbConnection.close()
-
+	@use_db
+	def delete(self, user_id, gift_id, cursor):
+		cursor.callproc('deleteGift', (user_id, gift_id))
+		cursor.connection.commit()
 		return make_response('', 204)
 
-
-class Test(Resource):
-	@use_db
-	def get(self, test_id, cursor):
-		for i in session:
-			print(i)
-		return make_response(jsonify({'hello': 'world'}), 200)
 
 ####################################################################################
 #
@@ -368,7 +276,6 @@ api.add_resource(Users, '/users')
 api.add_resource(User, '/users/<string:user_id>')
 api.add_resource(Gifts, '/users/<string:user_id>/gifts')
 api.add_resource(Gift, '/users/<string:user_id>/gifts/<int:gift_id>')
-api.add_resource(Test, '/test/<string:test_id>')
 
 
 #############################################################################
