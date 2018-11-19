@@ -9,7 +9,7 @@ from ldap3.core.exceptions import *
 import ssl
 import settings
 import pymysql.cursors
-from utils import use_db, get_ldap_connection, get_vals, check_user
+from utils import use_db, get_ldap_connection, get_vals, check_user, uri
 
 app = Flask(__name__)
 # Set Server-side session config: Save sessions in the local app directory.
@@ -120,8 +120,10 @@ class Users(Resource):
 				# at this point the user is logged in
 				cursor.callproc('registerUser', get_vals(req_params, 'username', 'first_name', 'last_name'))
 				cursor.connection.commit()
+				user = cursor.fetchone()
+				user['uri'] = uri(request.url, user['user_id'])
 
-				response = { 'status': 'success' }
+				response = { 'user': user }
 				responseCode = 200
 			except LDAPException:
 				abort(403)
@@ -134,6 +136,8 @@ class Users(Resource):
 	def get(self, cursor):
 		cursor.callproc('getUsers')
 		users = cursor.fetchall()
+		for user in users:
+			user['uri'] = uri(request.url, user['user_id'])
 		return make_response(jsonify({ 'users': users }), 200)
 
 
@@ -145,6 +149,7 @@ class User(Resource):
 
 		user = check_user(cursor, user_id)
 		if user:
+			user['uri'] = request.url
 			response = {'user': user}
 			responseCode = 200
 
@@ -172,6 +177,7 @@ class User(Resource):
 			cursor.callproc('updateUser', get_vals(req_params, 'username', 'first_name', 'last_name'))
 			user = cursor.fetchone()
 			cursor.connection.commit()
+			user['uri'] = request.url
 			response = { 'user': user }
 			responseCode = 200
 
@@ -200,6 +206,7 @@ class Gifts(Resource):
 			cursor.callproc('registerGift', get_vals(req_params, 'item_name', 'price', 'to')+(user_id,))
 			cursor.connection.commit()
 			gift = cursor.fetchone()
+			gift['uri'] = uri(request.url, gift['gift_id'])
 			response = { 'gift': gift }
 			responseCode = 200
 
@@ -212,6 +219,8 @@ class Gifts(Resource):
 
 		cursor.callproc('getGiftsSent', (user_id,))
 		gifts = cursor.fetchall()
+		for gift in gifts:
+			gift['uri'] = uri(request.url, gift['gift_id'])
 		response = { 'gifts': gifts }
 		responseCode = 200
 
@@ -228,6 +237,7 @@ class Gift(Resource):
 		cursor.callproc('getGiftById', (user_id, gift_id))
 		gift = cursor.fetchone()
 		if gift:
+			gift['uri'] = request.url
 			response = {'gift': gift }
 			responseCode = 200
 
@@ -250,10 +260,11 @@ class Gift(Resource):
 		response = { 'status': 'fail' }
 		responseCode = 400
 
-		cursor.callproc('updateGift', (gift_id, req_params['item_name'], req_params['price'], req_params['to'], user_id))
+		cursor.callproc('updateGift', (gift_id,)+get_vals(req_params, 'item_name', 'price', 'to')+(user_id,))
 		gift = cursor.fetchone()
 		cursor.connection.commit()
 		if gift:
+			gift['uri'] = request.url
 			response = { 'gift': gift }
 			responseCode = 200
 

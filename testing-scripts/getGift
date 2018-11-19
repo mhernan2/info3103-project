@@ -3,4 +3,4 @@
 read -p 'user_id: ' user_id
 read -p 'gift_id: ' gift_id
 
-curl -X GET "http://info3103.cs.unb.ca:36371/users/$user_id/gifts/$gift_id"
+curl -X GET http://info3103.cs.unb.ca:36371/users/$user_id/gifts/$gift_id

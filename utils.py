@@ -43,3 +43,6 @@ def check_user(cursor, user_id):
 	cursor.callproc('getUserById', (user_id,))
 	user = cursor.fetchone()
 	return user
+
+def uri(url, id):
+	return '{url}/{id}'.format(url=url, id=id)
