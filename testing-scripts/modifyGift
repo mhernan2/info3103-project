@@ -6,4 +6,4 @@ read -p "price: " price
 read -p "to: " to
 read -p "from: " from
 
-curl -i -H "Content-Type: application/json" -X PUT -d '{"item_name": "'$item_name'", "price": "'$price'", "to": "'$to'", "from": "'$from'"}' -c cookie-jar -k http://info3103.cs.unb.ca:36371/users/$from/gifts/$gift_id
+curl -i -H "Content-Type: application/json" -X PUT -d '{"item_name": "'$item_name'", "price": "'$price'", "to": "'$to'", "from": "'$from'"}' -b cookie-jar -k http://info3103.cs.unb.ca:36371/users/$from/gifts/$gift_id
