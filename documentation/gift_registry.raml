@@ -3,7 +3,6 @@ title: Present Registry
 version: v0.01
 baseUri: http://info3103.cs.unb.ca:36371
 types:
-  URI: string
   user:
     type: object
     properties:
@@ -12,16 +11,23 @@ types:
         required: false
       first_name: string
       last_name:  string
+      URI:
+        type: string
+        required: false
+
   gift:
     type: object
     properties:
       gift_id:
         type: string
         required: false
-      item_name:  string
-      price:      number
-      to:         string
-      from:       string
+      item_name: string
+      price: number
+      to: string
+      from: string
+      URI:
+        type: string
+        required: false
   credentials:
     type: object
     properties: 
@@ -49,14 +55,16 @@ types:
             example: |
               [
                 {
-                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-3065ec6fbf23",
+                  "user_id": "tsegura",
                   "first_name": "Tom",
-                  "last_name": "Segura"
+                  "last_name": "Segura",
+                  "uri": "info3103.cs.unb.ca/users/tsegura"
                 },
                 {
-                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                  "user_id": "bburr",
                   "first_name": "Bill",
-                  "last_name": "Burr"
+                  "last_name": "Burr",
+                  "uri": "info3103.cs.unb.ca/users/bburr"
                 }
               ]
       404:
@@ -80,9 +88,10 @@ types:
             type: user
             example:
               {
-                "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                "user_id": "bburr",
                 "first_name": "Bill",
                 "last_name": "Burr",
+                "uri": "info3103.cs.unb.ca/users/bburr"
               }
       404:
 
@@ -96,9 +105,10 @@ types:
               type: user
               example: |
                 {
-                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                  "user_id": "bburr",
                   "first_name": "Bill",
-                  "last_name": "Burr"
+                  "last_name": "Burr",
+                  "uri": "info3103.cs.unb.ca/users/bburr"
                 }
         403:
         404:
@@ -109,7 +119,7 @@ types:
           type: user
           example: |
               {
-                "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                "user_id": "8",
                 "first_name": "Billy",
                 "last_name": "Burr"
               }
@@ -120,9 +130,10 @@ types:
               type: user
               example: |
                 {
-                  "user_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                  "user_id": "8",
                   "first_name": "Bill",
-                  "last_name": "Burr"
+                  "last_name": "Burr",
+                  "uri": "info3103.cs.unb.ca/users/bburr"
                 }
         404:
         400:
@@ -145,18 +156,20 @@ types:
                 example: |
                   [
                     {
-                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "gift_id": "8",
                       "to": "Tom",
                       "from": "Morgan",
                       "item_name": "car",
-                      "price": 30000
+                      "price": 30000,
+                      "uri": "info3103.cs.unb.ca/users/morgan/gifts/8"
                     },
                     {
-                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "gift_id": "8",
                       "to": "Mark",
                       "from": "Teresa",
                       "item_name": "laptop",
-                      "price": 1200
+                      "price": 1200,
+                      "uri": "info3103.cs.unb.ca/users/teresa/gifts/8"
                     }
                   ]
       post:
@@ -168,11 +181,12 @@ types:
                 type: gift
                 example: |
                   {
-                    "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                    "gift_id": "8",
                     "to": "Mark",
                     "from": "Albert",
                     "item_name": "laptop",
-                    "price": 1200
+                    "price": 1200,
+                    "uri": "info3103.cs.unb.ca/users/albert/gifts/8"
                   }
           403:
           400:
@@ -196,11 +210,12 @@ types:
                   type: gift
                   example: |
                     {
-                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "gift_id": "8",
                       "to": "Mark",
                       "from": "Albert",
                       "item_name": "laptop",
-                      "price": 1200
+                      "price": 1200,
+                      "uri": "info3103.cs.unb.ca/users/albert/gifts/8"
                     }
             404:
         put:
@@ -222,46 +237,18 @@ types:
                   type: gift
                   example: |
                     {
-                      "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
+                      "gift_id": "8",
                       "to": "Mark",
                       "from": "Albert",
                       "item_name": "acer laptop",
-                      "price": 1200
+                      "price": 1200,
+                      "uri": "info3103.cs.unb.ca/users/albert/gifts/8"
                     }
             404:
         delete:
           description: delete a gift resource
           responses:
             204:
-
-/gifts:
-  description: collection of gift resources
-
-  get:
-    description: retrieves a list of all gift resources
-    queryParameters: 
-      user_id: string
-    responses: 
-      200:
-        body:
-          application/json:
-            example: |
-              [
-                {
-                  "gift_id": "fdecdb4f-dbd7-11e8-b6a5-8d0a3ddafd2",
-                  "to": "Mark",
-                  "from": "Albert",
-                  "item_name": "acer laptop",
-                  "price": 1200
-                },
-                {
-                  "gift_id": "fdecdb4f-dbd7-11e8-b6a5-7as56d5fas",
-                  "to": "Laura",
-                  "from": "Morgan",
-                  "item_name": "iphone x",
-                  "price": 1000
-                }
-              ]
 
 /login:
   description: manages login mechanism
