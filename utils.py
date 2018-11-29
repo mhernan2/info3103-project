@@ -19,7 +19,7 @@ def use_db(func):
 			kwargs['cursor'] = cursor
 			return func(*args, **kwargs)
 		except:
-			abort(500)
+			abort(403)
 		finally:
 			cursor.close()
 			dbConnection.close()

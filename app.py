@@ -11,7 +11,7 @@ import settings
 import pymysql.cursors
 from utils import use_db, get_ldap_connection, get_vals, check_user, uri
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="")
 # Set Server-side session config: Save sessions in the local app directory.
 app.secret_key = settings.SECRET_KEY
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -35,10 +35,18 @@ def not_found(error):
 	return make_response(jsonify( { 'status': 'Access Denied' } ), 403)
 
 
+class IndexPage(Resource):
+	def get(self):
+		return app.send_static_file('index.html')
+
+
 class Login(Resource):
 
 	@use_db
 	def post(self, cursor):
+
+		response = { 'status': 'fail' }
+		responseCode = 403
 
 		if not request.json:
 			abort(400)
@@ -52,7 +60,6 @@ class Login(Resource):
 			abort(400)
 
 		if session.get('username') == req_params['username']:
-			response = {'status': 'success'}
 			responseCode = 200
 		else:
 			if check_user(cursor, req_params['username']):
@@ -63,7 +70,7 @@ class Login(Resource):
 					ldapConnection.bind()
 
 					session['username'] = req_params['username']
-					response = {'status': 'success' }
+					response = { 'status': 'success' }
 					responseCode = 201
 				except LDAPException:
 					abort(403)
@@ -282,6 +289,7 @@ class Gift(Resource):
 # Identify/create endpoints and endpoint objects
 #
 api = Api(app)
+api.add_resource(IndexPage, '/')
 api.add_resource(Login, '/login')
 api.add_resource(Users, '/users')
 api.add_resource(User, '/users/<string:user_id>')
