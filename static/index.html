@@ -23,15 +23,19 @@
 		<h1 class="display-3 text-center">Present Registry</h1>
 		<div id="app">
 
-			<div class="login-btn-wrapper position-absolute" v-on:click="log_user">
-				<button class="btn btn-primary">
-					<span v-if="!login">Login</span>
-					<span v-else>Logout</span>
-				</button>
-			</div>
-
-			<div class="container">
+			<div id="main-container" class="container">
 				<div class="row justify-content-center">
+
+					<div class="login-message-wrapper">
+						<span v-if="login"><b>Hello</b> {{ user_id }}</span>
+					</div>
+
+					<div class="login-btn-wrapper" v-on:click="log_user">
+						<button class="btn btn-primary">
+							<span v-if="!login">Login</span>
+							<span v-else>Logout</span>
+						</button>
+					</div>
 
 					<div id="login-form" class="col-lg-6 d-none">
 						<form action="#" v-on:submit="login_user">
@@ -74,9 +78,49 @@
 						</form>
 					</div>
 
-					<div id="main-menu" class="col-lg-6 d-flex flex-column" v-if="login">
-						<a href="#" class="btn btn-primary mt-3">Show Sent Gifts</a>
-						<a href="#" class="btn btn-primary mt-3">Send Gifts</a>
+					<div id="main-menu" class="col-lg-6 mt-5 d-flex flex-column" v-if="login">
+						<a href="#" class="btn btn-primary" v-on:click="show_sent_gifts">Show Sent Gifts</a>
+						<a href="#" class="btn btn-primary mt-3" v-on:click="show_gift_form">Send Gifts</a>
+					</div>
+
+					<div id="gift-list" class="container-fluid col-lg-12 mt-5 d-none" v-if="login">
+						<div class="row">
+							<div class="p-1 col-lg-4" v-for="gift in gifts">
+								<div class="card">
+									<ul class="list-group list-group-flush">
+										<li class="list-group-item">
+											<b>Gift:</b>
+											<a href="{{ gift.uri }}">{{ gift.name }}</a>
+										</li>
+										<li class="list-group-item"><b>Gift ID:</b> {{ gift.gift_id }}</li>
+										<li class="list-group-item"><b>To:</b> {{ gift.to_user }}</li>
+										<li class="list-group-item"><b>From:</b> {{ gift.from_user }}</li>
+										<li class="list-group-item"><b>Price:</b> ${{ gift.price }}</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div id="gift-form" class="col-lg-12 mt-5 d-none" v-if="login">
+						<form action="#" v-on:submit="register_gift">
+							<div class="form-group">
+								<label for="to-input">To</label>
+								<select class="custom-select" id="to-input">
+									<option selected>Choose...</option>
+									<option v-for="user in users" >{{ user.user_id }}</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label for="giftname-input">Gift Description</label>
+								<input id="giftname-input" class="form-control" type="text">
+							</div>
+							<div class="form-group">
+								<label for="price-input">Gift Price</label>
+								<input id="price-input" class="form-control" type="number">
+							</div>
+							<button class="btn btn-primary">Submit</button>
+						</form>
 					</div>
 
 				</div>

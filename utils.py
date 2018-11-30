@@ -19,6 +19,7 @@ def use_db(func):
 			kwargs['cursor'] = cursor
 			return func(*args, **kwargs)
 		except:
+			print('DB_ERROR-'*10)
 			abort(403)
 		finally:
 			cursor.close()

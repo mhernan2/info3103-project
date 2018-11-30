@@ -1,4 +1,35 @@
-.login-btn-wrapper {
-  top: 1rem;
-  left: 1rem;
+
+* {
+	transition: all 0.5s;
 }
+@media only screen and (max-width: 780px) {
+	.login-btn-wrapper, .login-message-wrapper {
+		margin-top: 3rem;
+		width: 100%;
+		text-align: center;
+	}
+}
+
+@media only screen and (min-width:780px) {
+	.login-btn-wrapper, .login-message-wrapper {
+		position: absolute;
+		top: 1rem;
+	}
+
+	.login-btn-wrapper {
+		left: 1rem;
+	}
+
+	.login-message-wrapper {
+		right: 1rem;
+	}
+}
+
+/* .btn-primary {
+	background-color: #009944;
+	border: #ccc;
+}
+
+.btn-primary:hover {
+	background-color: #33bb44;
+} */

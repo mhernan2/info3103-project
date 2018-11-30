@@ -85,6 +85,7 @@ class Login(Resource):
 
 		if session.get('username'):
 			response = { 'status': 'success' }
+			response['username'] = session.get('username')
 			responseCode = 200
 
 		return make_response(jsonify(response), responseCode)
@@ -133,6 +134,7 @@ class Users(Resource):
 				response = { 'user': user }
 				responseCode = 200
 			except LDAPException:
+				print('+'*100)
 				abort(403)
 			finally:
 				ldapConnection.unbind()
