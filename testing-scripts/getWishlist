@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl -i -X GET -c cookie-jar -k http://info3103.cs.unb.ca:36371/wishlist

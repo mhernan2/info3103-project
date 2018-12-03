@@ -1,0 +1,5 @@
+#!/bin/bash
+
+read -p "gift_id: " gift_id
+
+curl -i -X POST -b cookie-jar -k http://info3103.cs.unb.ca:36371/wishlist/gift/$gift_id/send

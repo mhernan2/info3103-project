@@ -1,0 +1,6 @@
+#!/bin/bash
+
+read -p "item_name: " item_name
+read -p "price: " price
+
+curl -i -X POST -b cookie-jar -k "http://info3103.cs.unb.ca:36371/wishlist?name=$item_name&price=$price"

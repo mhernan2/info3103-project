@@ -4,5 +4,6 @@ read -p "item_name: " item_name
 read -p "price: " price
 read -p "to: " to
 read -p "from: " from
+read -p "wishlisted (0 or 1): " wishlisted
 
-curl -i -H "Content-Type: application/json" -X POST -d '{"item_name": "'$item_name'", "price": "'$price'", "to": "'$to'", "from": "'$from'"}' -b cookie-jar -k http://info3103.cs.unb.ca:36371/users/$from/gifts
+curl -i -H "Content-Type: application/json" -X POST -d '{"item_name": "'$item_name'", "price": "'$price'", "to": "'$to'", "from": "'$from'", "wishlisted": "'$wishlisted'"}' -b cookie-jar -k http://info3103.cs.unb.ca:36371/users/$from/gifts
