@@ -30,14 +30,13 @@
 						<span v-if="login"><b>Hello</b> {{ user_id }}</span>
 					</div>
 
-					<div class="login-btn-wrapper" v-on:click="log_user">
+					<div class="login-btn-wrapper" v-on:click="log_user" v-if="login">
 						<button class="btn btn-primary">
-							<span v-if="!login">Login</span>
-							<span v-else>Logout</span>
+							<span>Logout</span>
 						</button>
 					</div>
 
-					<div id="login-form" class="col-lg-6 d-none">
+					<div id="login-form" class="col-lg-6" v-if="!login">
 						<form action="#" v-on:submit="login_user">
 							<div class="form-group">
 								<label for="login-input">Username</label>
@@ -79,8 +78,9 @@
 					</div>
 
 					<div id="main-menu" class="col-lg-6 mt-5 d-flex flex-column" v-if="login">
-						<a href="#" class="btn btn-primary" v-on:click="show_sent_gifts">Show Sent Gifts</a>
-						<a href="#" class="btn btn-primary mt-3" v-on:click="show_gift_form">Send Gifts</a>
+						<a href="#" class="btn btn-primary mb-3" v-on:click="show_gifts_received">Show Gifts Received</a>
+						<a href="#" class="btn btn-primary mb-3" v-on:click="show_gifts_sent">Show Gifts Sent</a>
+						<a href="#" class="btn btn-primary" v-on:click="show_gift_form">Send Gifts</a>
 					</div>
 
 					<div id="gift-list" class="container-fluid col-lg-12 mt-5 d-none" v-if="login">

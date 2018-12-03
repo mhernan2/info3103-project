@@ -93,11 +93,12 @@ var app=new Vue({
 				$('#pw-input-2 + .invalid-feedback').show();
 			});
 		},
-		show_sent_gifts: function() {
+		show_gifts: function(sent) {
 			// check if user is logged in
 			let app = this;
 			if (this.login) {
-				axios.get('http://info3103.cs.unb.ca:36371/users/' + app.user_id + '/gifts')
+				q = sent ? '?sent=true' : '';
+				axios.get('http://info3103.cs.unb.ca:36371/users/' + app.user_id + '/gifts' + q)
 				.then(function (response) {
 					app.gifts = response.data.gifts;
 					$('#gift-list').removeClass('d-none');
@@ -107,6 +108,14 @@ var app=new Vue({
 					console.log('an error occurred');
 				});
 			}
+		},
+		show_gifts_sent: function() {
+			let app = this;
+			app.show_gifts(true);
+		},
+		show_gifts_received: function() {
+			let app = this;
+			app.show_gifts(false);
 		},
 		show_gift_form: function() {
 			$('#gift-list').addClass('d-none');
