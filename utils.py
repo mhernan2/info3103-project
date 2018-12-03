@@ -1,6 +1,6 @@
 import settings
 import pymysql
-from flask import abort
+from flask import abort, request
 from pymysql.cursors import DictCursor
 from ldap3 import Server, Connection, ALL
 from ldap3.core.exceptions import *
@@ -19,7 +19,7 @@ def use_db(func):
 			kwargs['cursor'] = cursor
 			return func(*args, **kwargs)
 		except:
-			print('DB_ERROR-'*10)
+			print('DBERROR-'*10)
 			abort(403)
 		finally:
 			cursor.close()
@@ -45,5 +45,14 @@ def check_user(cursor, user_id):
 	user = cursor.fetchone()
 	return user
 
+
 def uri(url, id):
 	return '{url}/{id}'.format(url=url, id=id)
+
+
+def query_params(func):
+	def wrapper(*args, **kwargs):
+		kwargs.update(request.args)
+		return func(*args, **kwargs)
+		
+	return wrapper

@@ -9,7 +9,7 @@ from ldap3.core.exceptions import *
 import ssl
 import settings
 import pymysql.cursors
-from utils import use_db, get_ldap_connection, get_vals, check_user, uri
+from utils import use_db, get_ldap_connection, get_vals, check_user, uri, query_params
 
 app = Flask(__name__, static_url_path="")
 # Set Server-side session config: Save sessions in the local app directory.
@@ -134,7 +134,6 @@ class Users(Resource):
 				response = { 'user': user }
 				responseCode = 200
 			except LDAPException:
-				print('+'*100)
 				abort(403)
 			finally:
 				ldapConnection.unbind()
@@ -147,6 +146,7 @@ class Users(Resource):
 		users = cursor.fetchall()
 		for user in users:
 			user['uri'] = uri(request.url, user['user_id'])
+			user['wishlist'] = 'http://{}:{}/wishlist/user/{}'.format(settings.APP_HOST, settings.APP_PORT, user['user_id'])
 		return make_response(jsonify({ 'users': users }), 200)
 
 
@@ -204,6 +204,8 @@ class Gifts(Resource):
 			parser.add_argument('item_name', type=str, required=True)
 			parser.add_argument('price', type=int, required=True)
 			parser.add_argument('to', type=str, required=True)
+			parser.add_argument('from', type=str, required=False, default=None)
+			parser.add_argument('wishlisted', type=str, required=False, default=0)
 			req_params = parser.parse_args()
 		except:
 			abort(400)
@@ -212,7 +214,7 @@ class Gifts(Resource):
 		responseCode = 403
 
 		if session.get('username') == user_id:
-			cursor.callproc('registerGift', get_vals(req_params, 'item_name', 'price', 'to')+(user_id,))
+			cursor.callproc('registerGift', get_vals(req_params, 'item_name', 'price', 'to', 'from', 'wishlisted'))
 			cursor.connection.commit()
 			gift = cursor.fetchone()
 			gift['uri'] = uri(request.url, gift['gift_id'])
@@ -222,11 +224,15 @@ class Gifts(Resource):
 		return make_response(jsonify(response), responseCode)
 
 	@use_db
-	def get(self, user_id, cursor):
+	@query_params
+	def get(self, user_id, cursor, **kwargs):
 		response = { 'status': 'fail' }
 		responseCode = 400
 
-		cursor.callproc('getGiftsSent', (user_id,))
+		if kwargs.get('sent'):
+			cursor.callproc('getGiftsSent', (user_id,))
+		else:
+			cursor.callproc('getGiftsReceived', (user_id,))
 		gifts = cursor.fetchall()
 		for gift in gifts:
 			gift['uri'] = uri(request.url, gift['gift_id'])
@@ -286,6 +292,79 @@ class Gift(Resource):
 		return make_response('', 204)
 
 
+class Wishlist(Resource):
+
+	@use_db
+	@query_params
+	def get(self, cursor, **kwargs):
+		response = { 'status': 'Resource Not Found' }
+		responseCode = 404
+
+		if kwargs.get('user_id'):
+			cursor.callproc('getUserWishlist', (kwargs['user_id'],))
+		else:
+			cursor.callproc('getWishlist')
+
+		wishlist = cursor.fetchall() or []
+		response = {'wishlist': wishlist}
+		responseCode = 200
+
+		return make_response(jsonify(response), responseCode)
+
+
+class SendGift(Resource):
+
+	@use_db
+	def post(self, cursor):
+		if not request.json:
+			abort(400)
+
+		parser = reqparse.RequestParser()
+		try:
+			parser.add_argument('gift_id', type=int, required=True)
+			req_params = parser.parse_args()
+		except:
+			abort(400)
+
+		response = {'status': 'Access Denied'}
+		responseCode = 403
+
+		if session.get('username'):
+			cursor.callproc('sendGift', (req_params['gift_id'], session['username']))
+			gift = cursor.fetchone()
+			response = {'gift': gift}
+			responseCode = 200
+			cursor.connection.commit()
+
+		return make_response(jsonify(response), responseCode)
+
+
+class ReceiveGift(Resource):
+	@use_db
+	def post(self, cursor):
+		if not request.json:
+			abort(400)
+
+		parser = reqparse.RequestParser()
+		try:
+			parser.add_argument('gift_id', type=int, required=True)
+			req_params = parser.parse_args()
+		except:
+			abort(400)
+
+		response = {'status': 'Access Denied'}
+		responseCode = 403
+
+		if session.get('username'):
+			cursor.callproc('receiveGift', (req_params['gift_id'], session['username']))
+			gift = cursor.fetchone()
+			response = {'gift': gift}
+			responseCode = 200
+			cursor.connection.commit()
+
+		return make_response(jsonify(response), responseCode)
+
+
 ####################################################################################
 #
 # Identify/create endpoints and endpoint objects
@@ -297,7 +376,9 @@ api.add_resource(Users, '/users')
 api.add_resource(User, '/users/<string:user_id>')
 api.add_resource(Gifts, '/users/<string:user_id>/gifts')
 api.add_resource(Gift, '/users/<string:user_id>/gifts/<int:gift_id>')
-
+api.add_resource(Wishlist, '/wishlist')
+api.add_resource(SendGift, '/wishlist/actions/send')
+api.add_resource(ReceiveGift, '/gifts/actions/receive')
 
 #############################################################################
 if __name__ == "__main__":
