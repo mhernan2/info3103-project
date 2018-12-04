@@ -1,6 +1,6 @@
 import settings
 import pymysql
-from flask import abort, request
+from flask import abort, request, session
 from pymysql.cursors import DictCursor
 from ldap3 import Server, Connection, ALL
 from ldap3.core.exceptions import *
@@ -56,3 +56,9 @@ def query_params(func):
 		return func(*args, **kwargs)
 		
 	return wrapper
+
+
+def filter_user(x):
+	if x['user_id'] == session['username']:
+		return
+	return x

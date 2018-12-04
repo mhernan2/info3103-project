@@ -2,6 +2,7 @@
 * {
 	transition: all 0.5s;
 }
+
 @media only screen and (max-width: 780px) {
 	.login-btn-wrapper, .login-message-wrapper {
 		margin-top: 3rem;
@@ -23,6 +24,10 @@
 	.login-message-wrapper {
 		right: 1rem;
 	}
+}
+
+.display-5 {
+	font-size: 2.5rem;
 }
 
 /* .btn-primary {

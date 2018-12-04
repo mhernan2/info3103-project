@@ -9,7 +9,7 @@ from ldap3.core.exceptions import *
 import ssl
 import settings
 import pymysql.cursors
-from utils import use_db, get_ldap_connection, get_vals, check_user, uri, query_params
+from utils import use_db, get_ldap_connection, get_vals, check_user, uri, query_params, filter_user
 
 app = Flask(__name__, static_url_path="")
 # Set Server-side session config: Save sessions in the local app directory.
@@ -143,10 +143,10 @@ class Users(Resource):
 	@use_db
 	def get(self, cursor):
 		cursor.callproc('getUsers')
-		users = cursor.fetchall()
+		users = cursor.fetchall() or []
+		users = list(filter(filter_user, users))
 		for user in users:
 			user['uri'] = uri(request.url, user['user_id'])
-			user['wishlist'] = 'http://{}:{}/wishlist/user/{}'.format(settings.APP_HOST, settings.APP_PORT, user['user_id'])
 		return make_response(jsonify({ 'users': users }), 200)
 
 
@@ -358,9 +358,10 @@ class ReceiveGift(Resource):
 		if session.get('username'):
 			cursor.callproc('receiveGift', (req_params['gift_id'], session['username']))
 			gift = cursor.fetchone()
-			response = {'gift': gift}
-			responseCode = 200
-			cursor.connection.commit()
+			if gift:
+				response = {'gift': gift}
+				responseCode = 200
+				cursor.connection.commit()
 
 		return make_response(jsonify(response), responseCode)
 
