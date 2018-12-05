@@ -25,14 +25,14 @@
 	</head>
 	<body>
 
-		<h1 class="display-3 text-center">Present Registry</h1>
+		<h1 id="display-title" class="display-3 text-center">Present Registry</h1>
 		<div id="app">
 
 			<div id="main-container" class="container">
 				<div class="row justify-content-center">
 
 					<div class="login-message-wrapper">
-						<span v-if="login"><b>Hello</b> {{ user_id }}</span>
+						<span v-if="login"><b>Hello</b> {{ user_name }}</span>
 					</div>
 
 					<div class="login-btn-wrapper" v-on:click="logout_user" v-if="login">
@@ -41,7 +41,7 @@
 						</button>
 					</div>
 
-					<div id="login-form" class="col-lg-6" v-if="!login">
+					<div id="login-form" class="col-12 col-lg-6 jumbotron" v-if="!login">
 						<h2 class="display-5">Login</h2>
 						<hr>
 						<form action="#" v-on:submit="login_user">
@@ -60,7 +60,7 @@
 						<button class="btn btn-info mt-1" v-on:click="show_register_form">Register</button>
 					</div>
 
-					<div id="register-form" class="col-lg-6 d-none">
+					<div id="register-form" class="col-12 col-lg-6 d-none jumbotron">
 						<h2 class="display-5">Register</h2>
 						<hr>
 						<form action="#" v-on:submit="register_user">
@@ -86,37 +86,42 @@
 						</form>
 					</div>
 
-					<div id="main-menu" class="col-lg-6 mt-5 d-flex flex-column" v-if="login">
+					<div id="main-menu" class="col-12 col-lg-6 mt-5 d-flex flex-column jumbotron" v-if="login">
 						<div class="btn-group btn-group-toggle mb-3 d-flex" data-toggle="buttons">
-							<label class="btn btn-outline-primary flex-grow-1" v-on:click="show_gifts_received">
+							<label class="btn btn-outline-primary flex-grow-1" v-on:click="show_gifts_received(user_id, user_name)">
 								<input type="radio" name="options" id="option1" autocomplete="off">My Gifts Received
 							</label>
-							<label class="btn btn-outline-primary flex-grow-1" v-on:click="show_gifts_sent">
+							<label class="btn btn-outline-primary flex-grow-1" v-on:click="show_gifts_sent(user_id, user_name)">
 								<input type="radio" name="options" id="option2" autocomplete="off">My Gifts Sent
 							</label>
-							<label class="btn btn-outline-primary flex-grow-1" v-on:click="show_wishlist(user_id)">
+							<label class="btn btn-outline-primary flex-grow-1" v-on:click="show_wishlist(user=user_id)">
 								<input type="radio" name="options" id="option3" autocomplete="off">My Wishlist
 							</label>
 						</div>
 						<a href="#" class="btn btn-primary mb-3" v-on:click="show_gift_form">Send Gifts</a>
 						<a href="#" class="btn btn-primary mb-3" v-on:click="show_wishlist_form">Add Gift to Wishlist</a>
-						<a href="#" class="btn btn-primary" v-on:click="show_users_list">Users</a>
+						<a href="#" class="btn btn-primary mb-3" v-on:click="show_users_list">Users</a>
+						<a href="#" class="btn btn-primary" v-on:click="show_wishlist()">Overall Wishlist</a>
 					</div>
 
-					<div id="gift-list" class="container-fluid col-lg-12 mt-5 d-none" v-if="login">
+					<div id="gift-list" class="container-fluid col-lg-12 mt-5 d-none jumbotron" v-if="login">
 						<div class="row">
-							<div class="p-1 col-lg-4" v-for="gift in gifts">
+							<div class="col-12">
+								<h2 class="display-5">{{ giftlist_title }}</h2>
+								<hr>
+							</div>
+							<div class="p-1 col-12 col-lg-4 col-xl-3" v-for="gift in gifts">
 								<div v-bind:id="'gift-'+gift.gift_id" class="card">
 									<ul class="list-group list-group-flush">
 										<li class="list-group-item">
-											<b>Gift:</b>
-											<a href="{{ gift.uri }}">{{ gift.name }}</a>
-											<span class="badge badge-warning float-right" v-if="gift.received">Received</span>
-											<button 
-												class="receive-btn badge badge-info float-right border-0" 
-												v-else-if="gift.to_user == user_id && gift.from_user" 
-												v-on:click="confirm_gift_received(gift)"
-												style="cursor: pointer">Receive Gift</button>
+											<b>Gift:</b> {{ gift.name }}
+											<p class="mb-0">
+												<span class="badge badge-warning" v-if="gift.received">Received</span>
+												<button 
+													class="receive-btn badge badge-info" 
+													v-else-if="gift.to_user == user_id && gift.from_user" 
+													v-on:click="confirm_gift_received(gift)">Receive Gift</button>
+											</p>
 										</li>
 										<li class="list-group-item"><b>Gift ID:</b> {{ gift.gift_id }}</li>
 										<li class="list-group-item"><b>To:</b> {{ gift.to_user }}</li>
@@ -125,10 +130,10 @@
 										<li class="list-group-item bg-secondary text-light" v-if="gift.wishlisted">
 											<b>Wishlisted</b>
 											<button 
-												class="badge badge-warning border-0 float-right" 
+												class="badge badge-warning float-right" 
 												v-on:click="send_gift(gift)" 
-												v-if="gift.to_user != user_id">Send</button>
-											<span class="badge badge-info border-0 float-right" v-else>Sent!</span>
+												v-if="gift.to_user != user_id && !gift.from_user">Send</button>
+											<span class="badge badge-info float-right" v-else-if="gift.from_user == user_id">Sent!</span>
 										</li>
 									</ul>
 								</div>
@@ -136,20 +141,26 @@
 						</div>
 					</div>
 
-					<div id="user-list" class="container-fluid col-lg-12 mt-5 d-none" v-if="login">
+					<div id="user-list" class="container-fluid col-lg-12 mt-5 d-none jumbotron" v-if="login">
 						<div class="row">
+							<div class="col-12">
+								<h2 class="display-5">User List</h2>
+								<hr>
+							</div>
 							<div class="p-1 col-12 col-lg-6" v-for="user in users">
 								<div class="card">
 									<div class="card-body">
 										<h5 class="card-title">{{ user.first_name }} {{ user.last_name }}</h5>
-										<button class="btn btn-primary" v-on:click="show_wishlist(user.user_id)">Wishlist</button>
+										<button class="btn btn-primary" v-on:click="show_wishlist(user=user, object=true)">Wishlist</button>
+										<button class="btn btn-primary" v-on:click="show_gifts_received(user.user_id, `${user.first_name} ${user.last_name}`)">Gifts Received</button>
+										<button class="btn btn-primary" v-on:click="show_gifts_sent(user.user_id, `${user.first_name} ${user.last_name}`)">Gifts Sent</button>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<div id="gift-form" class="col-lg-12 mt-5 d-none" v-if="login">
+					<div id="gift-form" class="col-lg-12 mt-5 d-none jumbotron" v-if="login">
 						<h2 class="display-5">Send Gifts</h2>
 						<hr>
 						<form action="#" v-on:submit="register_gift">
@@ -172,7 +183,7 @@
 						</form>
 					</div>
 
-					<div id="wishlist-form" class="col-lg-12 mt-5 d-none" v-if="login">
+					<div id="wishlist-form" class="col-lg-12 mt-5 d-none jumbotron" v-if="login">
 						<h2 class="display-5">Add To Wishlist</h2>
 						<hr>
 						<form action="#" v-on:submit="register_wishlist">

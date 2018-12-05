@@ -40,7 +40,7 @@ def get_vals(d, *args):
 	return tuple(d[k] for k in args)
 
 
-def check_user(cursor, user_id):
+def get_user(cursor, user_id):
 	cursor.callproc('getUserById', (user_id,))
 	user = cursor.fetchone()
 	return user
