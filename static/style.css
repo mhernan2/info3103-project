@@ -1,7 +1,26 @@
+@import url('https://fonts.googleapis.com/css?family=Fira+Sans|Life+Savers');
 
 * {
 	transition: all 0.5s;
 }
+
+body {
+	background-image: url('img/spring.png');
+	font-family: 'Fira Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: 'Life Savers', cursive;
+}
+
+#display-title {
+	text-shadow: 2px 2px 10px #ccc;
+}
+
+.jumbotron {
+	border: solid 1px #ccc;
+}
+
 @media only screen and (max-width: 780px) {
 	.login-btn-wrapper, .login-message-wrapper {
 		margin-top: 3rem;
@@ -23,6 +42,18 @@
 	.login-message-wrapper {
 		right: 1rem;
 	}
+}
+
+.display-5 {
+	font-size: 2.5rem;
+}
+
+.badge {
+	border: none;
+}
+
+button.badge {
+	cursor: pointer;
 }
 
 /* .btn-primary {

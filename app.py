@@ -9,7 +9,7 @@ from ldap3.core.exceptions import *
 import ssl
 import settings
 import pymysql.cursors
-from utils import use_db, get_ldap_connection, get_vals, check_user, uri, query_params
+from utils import use_db, get_ldap_connection, get_vals, get_user, uri, query_params, filter_user
 
 app = Flask(__name__, static_url_path="")
 # Set Server-side session config: Save sessions in the local app directory.
@@ -62,7 +62,8 @@ class Login(Resource):
 		if session.get('username') == req_params['username']:
 			responseCode = 200
 		else:
-			if check_user(cursor, req_params['username']):
+			user = get_user(cursor, req_params['username'])
+			if user:
 				try:
 					ldapConnection = get_ldap_connection(req_params['username'], req_params['password'])
 					ldapConnection.open()
@@ -70,7 +71,7 @@ class Login(Resource):
 					ldapConnection.bind()
 
 					session['username'] = req_params['username']
-					response = { 'status': 'success' }
+					response = { 'user': user }
 					responseCode = 201
 				except LDAPException:
 					abort(403)
@@ -79,12 +80,13 @@ class Login(Resource):
 
 		return make_response(jsonify(response), responseCode)
 
-	def get(self):
+	@use_db
+	def get(self, cursor):
 		response = {'status': 'fail'}
 		responseCode = 400
 
 		if session.get('username'):
-			response = { 'status': 'success' }
+			response = { 'user': get_user(cursor, session['username']) }
 			response['username'] = session.get('username')
 			responseCode = 200
 
@@ -117,7 +119,7 @@ class Users(Resource):
 		response = { 'status': 'User already registered' }
 		responseCode = 400
 
-		user = check_user(cursor, req_params['username'])
+		user = get_user(cursor, req_params['username'])
 		if not user:
 			try:
 				ldapConnection = get_ldap_connection(req_params['username'], req_params['password'])
@@ -143,10 +145,10 @@ class Users(Resource):
 	@use_db
 	def get(self, cursor):
 		cursor.callproc('getUsers')
-		users = cursor.fetchall()
+		users = cursor.fetchall() or []
+		users = list(filter(filter_user, users))
 		for user in users:
 			user['uri'] = uri(request.url, user['user_id'])
-			user['wishlist'] = 'http://{}:{}/wishlist/user/{}'.format(settings.APP_HOST, settings.APP_PORT, user['user_id'])
 		return make_response(jsonify({ 'users': users }), 200)
 
 
@@ -156,7 +158,7 @@ class User(Resource):
 		response = { 'status': 'User doesn\'t exist' }
 		responseCode = 404
 
-		user = check_user(cursor, user_id)
+		user = get_user(cursor, user_id)
 		if user:
 			user['uri'] = request.url
 			response = {'user': user}
@@ -214,6 +216,8 @@ class Gifts(Resource):
 		responseCode = 403
 
 		if session.get('username') == user_id:
+			if session['username'] != req_params['to']:
+				req_params['from'] =  user_id
 			cursor.callproc('registerGift', get_vals(req_params, 'item_name', 'price', 'to', 'from', 'wishlisted'))
 			cursor.connection.commit()
 			gift = cursor.fetchone()
@@ -358,9 +362,10 @@ class ReceiveGift(Resource):
 		if session.get('username'):
 			cursor.callproc('receiveGift', (req_params['gift_id'], session['username']))
 			gift = cursor.fetchone()
-			response = {'gift': gift}
-			responseCode = 200
-			cursor.connection.commit()
+			if gift:
+				response = {'gift': gift}
+				responseCode = 200
+				cursor.connection.commit()
 
 		return make_response(jsonify(response), responseCode)
 
