@@ -31,8 +31,80 @@
 			<div id="main-container" class="container">
 				<div class="row justify-content-center">
 
-					<div class="login-message-wrapper">
-						<span v-if="login"><b>Hello</b> {{ user_name }}</span>
+					<div class="login-message-wrapper" v-if="login">
+						<span><b>Hello</b> {{ user_name }}</span>
+						<button id="edit-name-btn" class="btn btn-primary" data-toggle="modal" data-target="#edit-name-dialog">
+							<i class="fas fa-edit"></i>
+						</button>
+					</div>
+
+					<div class="modal fade" id="edit-name-dialog" tabindex="-1" role="dialog" aria-labelledby="modal-title" aria-hidden="true">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h5 class="modal-title" id="modal-title">Edit Name</h5>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+										<span aria-hidden="true">&times;</span>
+									</button>
+								</div>
+								<form action="#" v-on:submit="edit_name">
+									<div class="modal-body">
+										
+											<div class="form-group">
+												<label for="edit-firstname-input">First Name</label>
+												<input id="edit-firstname-input" class="form-control" type="text">
+											</div>
+											<div class="form-group">
+												<label for="edit-lastname-input">Last Name</label>
+												<input id="edit-lastname-input" class="form-control" type="text">
+											</div>
+										
+									</div>
+									<div class="modal-footer">
+										<div id="edit-name-message" class="text-muted"></div>
+										<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+										<button type="submit" class="btn btn-primary">Submit</button>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+
+					<div class="modal fade" id="edit-gift-dialog" tabindex="-1" role="dialog" aria-labelledby="modal-title-2" aria-hidden="true">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									<h5 class="modal-title" id="modal-title-2">Edit Gift</h5>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+										<span aria-hidden="true">&times;</span>
+									</button>
+								</div>
+								<form action="#" v-on:submit="edit_gift">
+									<div class="modal-body">
+										<div class="form-group">
+											<label for="edit-gift-name-input">Gift Name/Description</label>
+											<input id="edit-gift-name-input" class="form-control" type="text" v-bind:value="gift_editing.name">
+										</div>
+										<div class="form-group">
+											<label for="edit-gift-price-input">Gift Price</label>
+											<input id="edit-gift-price-input" class="form-control" type="number" v-bind:value="gift_editing.price">
+										</div>
+										<div class="form-group" v-if="!(gift_editing.to_user == user_id && gift_editing.wishlisted)">
+											<label for="edit-gift-touser-input">To User <span class="text-muted">(don't forget this)</span></label>
+											<select class="custom-select" id="edit-gift-touser-input">
+												<option selected>Choose...</option>
+												<option v-for="user in users" >{{ user.user_id }}</option>
+											</select>
+										</div>
+									</div>
+									<div class="modal-footer">
+										<div id="edit-gift-message" class="text-muted"></div>
+										<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+										<button type="submit" class="btn btn-primary">Submit</button>
+									</div>
+								</form>
+							</div>
+						</div>
 					</div>
 
 					<div class="login-btn-wrapper" v-on:click="logout_user" v-if="login">
@@ -134,6 +206,13 @@
 												v-on:click="send_gift(gift)" 
 												v-if="gift.to_user != user_id && !gift.from_user">Send</button>
 											<span class="badge badge-info float-right" v-else-if="gift.from_user == user_id">Sent!</span>
+										</li>
+										<li 
+										class="list-group-item" 
+										v-if="(!gift.received) && ((gift.to_user == user_id && gift.wishlisted) || (gift.from_user == user_id && !gift.wishlisted))">
+											<button class="btn btn-primary" v-on:click="set_editing_gift(gift)"
+											data-toggle="modal" data-target="#edit-gift-dialog">Edit Gift</button>
+											<button class="btn btn-warning" v-if="gift.from_user && !gift.received && !gift.wishlisted" v-on:click="delete_gift(gift)">Delete</button>
 										</li>
 									</ul>
 								</div>
