@@ -19,8 +19,7 @@ def use_db(func):
 			kwargs['cursor'] = cursor
 			return func(*args, **kwargs)
 		except:
-			print('DBERROR-'*10)
-			abort(403)
+			abort(404)
 		finally:
 			cursor.close()
 			dbConnection.close()
@@ -59,6 +58,6 @@ def query_params(func):
 
 
 def filter_user(x):
-	if x['user_id'] == session['username']:
+	if x['user_id'] == session.get('username'):
 		return
 	return x

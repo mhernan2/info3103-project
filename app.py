@@ -61,6 +61,7 @@ class Login(Resource):
 
 		if session.get('username') == req_params['username']:
 			responseCode = 200
+			response = { 'user': { 'user_id': session.get('username') } }
 		else:
 			user = get_user(cursor, req_params['username'])
 			if user:
@@ -87,7 +88,6 @@ class Login(Resource):
 
 		if session.get('username'):
 			response = { 'user': get_user(cursor, session['username']) }
-			response['username'] = session.get('username')
 			responseCode = 200
 
 		return make_response(jsonify(response), responseCode)
@@ -272,6 +272,7 @@ class Gift(Resource):
 			parser.add_argument('item_name', type=str, required=True)
 			parser.add_argument('price', type=int, required=True)
 			parser.add_argument('to', type=str, required=True)
+			parser.add_argument('from', type=str, required=False, default=None)
 			req_params = parser.parse_args()
 		except:
 			abort(400)
@@ -279,7 +280,7 @@ class Gift(Resource):
 		response = { 'status': 'fail' }
 		responseCode = 400
 
-		cursor.callproc('updateGift', (gift_id,)+get_vals(req_params, 'item_name', 'price', 'to')+(user_id,))
+		cursor.callproc('updateGift', (gift_id,)+get_vals(req_params, 'item_name', 'price', 'to', 'from'))
 		gift = cursor.fetchone()
 		cursor.connection.commit()
 		if gift:

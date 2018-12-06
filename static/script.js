@@ -6,7 +6,9 @@ var app=new Vue({
 		user_id: '',
 		user_name: '',
 		users: [],
-		giftlist_title: 'Gifts Received'
+		giftlist_title: 'Gifts Received',
+		wishlisted: 0,
+		gift_editing: {}
 	},
 
 	created: function () {
@@ -29,6 +31,7 @@ var app=new Vue({
 			});
 		},
 		login_user: function() {
+			let app = this;
 			let data = {
 				username: $('#login-input').val(),
 				password: $('#pw-input').val()
@@ -36,11 +39,11 @@ var app=new Vue({
 
 			axios.post('http://info3103.cs.unb.ca:36371/login', data)
 			.then(function (response) {
-				if (response.data['status'] == 'success') {
-					app.login = true;
-					$('#login-form').addClass('d-none');
-					app.user_id = data.username;
-				}
+				app.login = true;
+				let u = response.data.user;
+				app.user_id = u.user_id;
+				app.user_name = u.first_name + ' ' + u.last_name;
+				app.get_users();
 			})
 			.catch(function(error) {
 				$('#login-input + .invalid-feedback').show();
@@ -61,7 +64,7 @@ var app=new Vue({
 		},
 		register_user: function() {
 			let register_form = $('#register-form');
-			let first_name = register_form.find('#firstname-input').val();
+			let first_name = register_form.find('#first_name-input').val();
 			let last_name = register_form.find('#lastname-input').val();
 			let username = register_form.find('#login-input-2').val();
 			let password = register_form.find('#pw-input-2').val();
@@ -235,6 +238,66 @@ var app=new Vue({
 			axios.post('http://info3103.cs.unb.ca:36371/wishlist/actions/send', data)
 			.then(function (response) {
 				gift.from_user = app.user_id;
+			})
+			.catch(function(error) {
+				console.log('an error occurred');
+			});
+		},
+		edit_name: function() {
+			let app = this;
+			let first_name = $('#edit-firstname-input').val();
+			let last_name = $('#edit-lastname-input').val();
+			let data = {
+				username: app.user_id,
+				first_name: first_name,
+				last_name: last_name
+			}
+
+			axios.put(`http://info3103.cs.unb.ca:36371/users/${app.user_id}`, data)
+			.then(function(response) {
+				let user = response.data.user;
+				app.user_name = `${user.first_name} ${user.last_name}`;
+				$('#edit-name-message').text('First and last names successfully edited!');
+			})
+			.catch(function(error) {
+				console.log('an error occurred');
+			});
+		},
+		edit_gift: function() {
+			let app = this;
+			let gift_name = $('#edit-gift-name-input').val();
+			let gift_price = $('#edit-gift-price-input').val();
+			let gift_to_user = $('#edit-gift-touser-input option:selected').text();
+			gift_to_user = gift_to_user || app.user_id;
+			
+			let data = {
+				item_name: gift_name,
+				price: gift_price,
+				to: gift_to_user,
+				from: app.gift_editing.wishlisted ? null : app.user_id
+			}
+
+			console.log(data);
+
+			axios.put(`http://info3103.cs.unb.ca:36371/users/${app.user_id}/gifts/${app.gift_editing.gift_id}`, data)
+			.then(function(response) {
+				app.gift_editing.name = gift_name;
+				app.gift_editing.price = gift_price;
+				app.gift_editing.to_user = gift_to_user;
+			})
+			.catch(function(error) {
+				console.log('an error occurred');
+			})
+		},
+		set_editing_gift: function(gift) {
+			let app = this;
+			app.gift_editing = gift;
+		},
+		delete_gift: function(gift) {
+			let app = this;
+			axios.delete(`http://info3103.cs.unb.ca:36371/users/${app.user_id}/gifts/${gift.gift_id}`)
+			.then(function(response) {
+				$(`#gift-${gift.gift_id}`).parent().remove();
 			})
 			.catch(function(error) {
 				console.log('an error occurred');
