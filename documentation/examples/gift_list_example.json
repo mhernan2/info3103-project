@@ -1,0 +1,24 @@
+{
+  "gifts": [
+    {
+      "gift_id": "8",
+      "to": "mhernan2",
+      "from": "emusk",
+      "item_name": "Rocket",
+      "price": 50000,
+      "uri": "info3103.cs.unb.ca/users/mhernan2/gifts/8",
+      "wishlisted": 1,
+      "received": 0
+    },    
+    {
+      "gift_id": "9",
+      "to": "mhernan2",
+      "from": "emusk",
+      "item_name": "Model S",
+      "price": 150000,
+      "uri": "info3103.cs.unb.ca/users/mhernan2/gifts/9",
+      "wishlisted": 1,
+      "received": 1
+    }    
+  ]
+}

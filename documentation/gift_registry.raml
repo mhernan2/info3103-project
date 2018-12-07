@@ -3,46 +3,80 @@ title: Present Registry
 version: v0.01
 baseUri: http://info3103.cs.unb.ca:36371
 types:
+  uri:
+    type: string
+    required: true
   user:
     type: object
     properties:
       user_id:
         type: string
-        required: false
-      first_name: string
-      last_name:  string
-      URI:
+        required: true
+      first_name:
         type: string
+        required: true
+      last_name:
+        type: string
+        required: true
+      uri: uri
+    example: !include examples/user_example.json
+  user_response:
+    type: object
+    properties:
+      user: user
+    example: !include examples/user_response_example.json
+  users:
+    type: object
+    properties:
+      users:
+        type: user[]
         required: false
-
+    example: !include examples/user_list_example.json 
+  account:
+    type: object
+    properties:
+      username: string
+      first_name: string
+      last_name: string
+      password: string
+    example: !include examples/account_example.json
   gift:
     type: object
     properties:
-      gift_id:
-        type: string
-        required: false
+      gift_id: string
       item_name: string
       price: number
       to: string
-      from: string
-      URI:
+      from:
         type: string
         required: false
+      uri: string
+      wishlisted: 
+        type: number
+        required: false
+      received: 
+        type: number
+        required: false
+    example: !include examples/gift_example.json
+  gift_response:
+    type: object
+    properties: 
+      gift: gift
+    example: !include examples/gift_response_example.json
+  gifts:
+    type: object
+    properties:
+      gifts: gift[]
   credentials:
     type: object
     properties: 
       username: string
       password: string
-  account:
-    type: object
-    properties:
-      user_id:
-        type: string
-        required: false
-      first_name: string
-      last_name: string
-      username: string
-      password: string
+    example: |
+      {
+        "username": "mhernan2",
+        "password": "abc123"
+      }
 
 /users:
   get:
@@ -51,223 +85,158 @@ types:
       200:
         body:
           application/json:
-            type: user[]
-            example: |
-              [
-                {
-                  "user_id": "tsegura",
-                  "first_name": "Tom",
-                  "last_name": "Segura",
-                  "uri": "info3103.cs.unb.ca/users/tsegura"
-                },
-                {
-                  "user_id": "bburr",
-                  "first_name": "Bill",
-                  "last_name": "Burr",
-                  "uri": "info3103.cs.unb.ca/users/bburr"
-                }
-              ]
-      404:
-  
+            type: users
+
   post:
     description: register a user into the system
     body:
       application/json:
         type: account
-        example: 
-          {
-            "first_name": "Bill",
-            "last_name": "Burr",
-            "username": "bburr",
-            "password": "abc123"
-          }
     responses:
       200:
         body:
           application/json:
-            type: user
-            example:
-              {
-                "user_id": "bburr",
-                "first_name": "Bill",
-                "last_name": "Burr",
-                "uri": "info3103.cs.unb.ca/users/bburr"
-              }
-      404:
+            type: user_response
 
   /{user_id}:
     get:
-      description: get a user resource with `user_id`
+      description: get a single user resource identified with `user_id`
       responses:
         200:
           body:
             application/json:
-              type: user
-              example: |
-                {
-                  "user_id": "bburr",
-                  "first_name": "Bill",
-                  "last_name": "Burr",
-                  "uri": "info3103.cs.unb.ca/users/bburr"
-                }
-        403:
+              type: user_response
         404:
     put:
-      description: updates the information of the user specified with `user_id`
+      description: update a user identified by `user_id`
       body:
         application/json:
           type: user
-          example: |
-              {
-                "user_id": "8",
-                "first_name": "Billy",
-                "last_name": "Burr"
-              }
       responses:
-        204:
+        200:
           body:
             application/json:
-              type: user
-              example: |
-                {
-                  "user_id": "8",
-                  "first_name": "Bill",
-                  "last_name": "Burr",
-                  "uri": "info3103.cs.unb.ca/users/bburr"
-                }
-        404:
+              type: user_response
         400:
-
+        403:
+        404:
     /gifts:
-      description: collection of gifts registered the application
-
       get:
-        description: retrieves a list of gifts linked to the user defined in `user_id`
+        description: get a list of gifts from the user identified with `user_id`
         queryParameters:
-          to:
-            description: name of the user that sent the gift
-            type: string
+          sent:
+            description: flag to retrieve sent or received gifts
+            type: boolean
             required: false
+            example: false
         responses:
           200:
             body:
               application/json:
-                type: gift[]
-                example: |
-                  [
-                    {
-                      "gift_id": "8",
-                      "to": "Tom",
-                      "from": "Morgan",
-                      "item_name": "car",
-                      "price": 30000,
-                      "uri": "info3103.cs.unb.ca/users/morgan/gifts/8"
-                    },
-                    {
-                      "gift_id": "8",
-                      "to": "Mark",
-                      "from": "Teresa",
-                      "item_name": "laptop",
-                      "price": 1200,
-                      "uri": "info3103.cs.unb.ca/users/teresa/gifts/8"
-                    }
-                  ]
+                type: gifts
+          404:
       post:
-        description: creates a new gift resource for the user defined by `user_id`
-        responses:
-          200:
-            body:
-              application/json:
-                type: gift
-                example: |
-                  {
-                    "gift_id": "8",
-                    "to": "Mark",
-                    "from": "Albert",
-                    "item_name": "laptop",
-                    "price": 1200,
-                    "uri": "info3103.cs.unb.ca/users/albert/gifts/8"
-                  }
-          403:
-          400:
+        description: create a new gift resource for the user identified with `user_id`
         body:
           application/json:
-              type: gift
-              example: |
-                {
-                  "to": "Mark",
-                  "from": "Albert",
-                  "item_name": "laptop",
-                  "price": 1200
-                }
+            type: gift
+        responses:
+          200:
+            body:
+              application/json:
+                type: gift_response
       /{gift_id}:
         get:
-          description: retrieve gift resource specified by `gift_id`
-          responses:
+          description: get a single gift resource identified with `gift_id` from user indentified with `user_id`
+          responses: 
             200:
               body:
                 application/json:
-                  type: gift
-                  example: |
-                    {
-                      "gift_id": "8",
-                      "to": "Mark",
-                      "from": "Albert",
-                      "item_name": "laptop",
-                      "price": 1200,
-                      "uri": "info3103.cs.unb.ca/users/albert/gifts/8"
-                    }
+                  type: gift_response
             404:
-        put:
-          description: modify gift resource specified by `user_id`
+        put: 
+          description: update a gift resource identified by `gift_id`
           body:
             application/json:
               type: gift
-              example: |
-                {
-                  "to": "Mark",
-                  "from": "Albert",
-                  "item_name": "acer laptop",
-                  "price": 1200
-                }
-          responses:
+          responses: 
             200:
               body:
                 application/json:
-                  type: gift
-                  example: |
-                    {
-                      "gift_id": "8",
-                      "to": "Mark",
-                      "from": "Albert",
-                      "item_name": "acer laptop",
-                      "price": 1200,
-                      "uri": "info3103.cs.unb.ca/users/albert/gifts/8"
-                    }
-            404:
+                  type: gift_response
+        
         delete:
-          description: delete a gift resource
-          responses:
+          description: delete a gift resource identified by `gift_id`
+          responses: 
             204:
 
 /login:
-  description: manages login mechanism
-
+  get:
+    description: check if a user is logged
+    responses: 
+      200:
+        body:
+          application/json:
+            type: user_response
+      400:
+  
   post:
-    description: logs in a user
+    description: login a user
     body:
       application/json:
         type: credentials
-        example: |
-          {
-            "username": "mzuckerberg",
-            "password": "abc123"
-          }
-    responses:
+    responses: 
       200:
-      404:
+        body:
+          application/json:
+            type: user_response
   
   delete:
-    description: logs out a user
-    responses:
-      204:
+    description: delete user session cookie / logout user
+    responses: 
+      200:
+        body:
+          application/json:
+            type: object
+            example: |
+              {
+                "status": "success"
+              }
+
+/wishlist:
+  get:
+    description: get a list of wishlisted items from all or a single user
+    queryParameters: 
+      user_id: 
+        type: string
+        description: identifies the user from which to get the wishlist
+        example: mhernan2
+        required: false
+    responses: 
+      200:
+        body:
+          application/json:
+            type: gifts
+  
+  /actions:
+    /send:
+      post:
+        description: record the logged in user as the sender of a wishlisted item
+        body:
+          application/json:
+            type: object
+            properties: 
+              gift_id: number
+            example: |
+              {
+                "gift_id": 8
+              }
+        responses: 
+          200:
+            body: 
+              application/json:
+                type: gift_response
+          400:
+          403:
+
+/gifts:

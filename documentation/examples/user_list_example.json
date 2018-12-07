@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "user_id": "mhernan2",
+      "first_name": "Mauricio",
+      "last_name": "Hernandez",
+      "uri": "info3103.cs.unb.ca/users/mhernan2"
+    },
+    {
+      "user_id": "emusk",
+      "first_name": "Elon",
+      "last_name": "Musk",
+      "uri": "info3103.cs.unb.ca/users/emusk"
+    }
+  ]
+}
